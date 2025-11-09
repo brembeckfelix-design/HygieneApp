@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Hygieneprüfung Trainer</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/icon-192.png">
+  <meta name="theme-color" content="#0b1020">
+  <style>
+    :root{--bg:#0b1020;--card:#121a35;--ink:#e6e6f0;--muted:#9aa3b2;--line:#223158;--accent:#38bdf8;--good:#22c55e;--bad:#ef4444;}
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:linear-gradient(180deg,#0b1020,#0d1326);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,'Helvetica Neue',Arial}
+    header{position:sticky;top:0;z-index:10;background:rgba(11,16,32,.7);backdrop-filter:saturate(180%) blur(10px);border-bottom:1px solid var(--line)}
+    .container{max-width:1000px;margin:0 auto;padding:14px 16px}
+    .brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.2px}
+    .brand .logo{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--accent),#60a5fa);box-shadow:0 6px 18px rgba(56,189,248,.35)}
+    nav{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+    nav button{flex:1;min-width:120px;border:1px solid var(--line);background:#0f1730;color:var(--ink);padding:10px 12px;border-radius:12px;cursor:pointer}
+    nav button.active{background:linear-gradient(135deg,#0f1b3d,#0b3a5b);box-shadow:inset 0 0 0 1px #2b416d,0 10px 22px rgba(56,189,248,.18)}
+    main .grid{display:grid;grid-template-columns:1fr;gap:16px;margin-top:16px}
+    @media(min-width:900px){ main .grid{grid-template-columns:2fr 1fr} }
+    .card{background:linear-gradient(180deg,#121a35,#0f1730);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:0 12px 40px rgba(2,8,23,.4)}
+    h1{font-size:22px;margin:0 0 8px} h2{font-size:18px;margin:0 0 8px;color:#d9e2f1}
+    p{color:var(--muted);margin:0 0 10px;line-height:1.5}
+    .row{display:flex;gap:10px;flex-wrap:wrap} .row>*{flex:1}
+    select,input[type=number]{width:100%;background:#0f1730;color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:10px}
+    .btn{border:1px solid var(--line);background:#0f1730;color:var(--ink);padding:10px 12px;border-radius:10px;cursor:pointer}
+    .btn.primary{background:linear-gradient(135deg,#0b3a5b,#38bdf8)}
+    .pill{display:inline-block;padding:4px 8px;border-radius:999px;border:1px solid var(--line);background:#0b142e;color:#cfe6ff;font-size:12px}
+    .muted{color:var(--muted)} .hidden{display:none}
+    .q-card{display:flex;flex-direction:column;gap:10px}
+    .answers{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+    .ans{padding:10px;border:1px solid var(--line);border-radius:12px;background:#0a1430;display:flex;gap:8px;align-items:flex-start;cursor:pointer}
+    .ans input{margin-top:3px}
+    .ans.correct{border-color:#1e6b36;background:rgba(34,197,94,.08)}
+    .ans.wrong{border-color:#7a2031;background:rgba(239,68,68,.08)}
+    .item{display:flex;justify-content:space-between;gap:10px;align-items:center;background:#0f1730;border:1px solid var(--line);border-radius:12px;padding:10px}
+    .footer{margin:24px 0 40px 0;color:#8da2c4;font-size:12px;text-align:center}
+  </style>
+</head>
+<body>
+<header>
+  <div class="container">
+    <div class="brand"><div class="logo"></div> Hygieneprüfung Trainer</div>
+    <nav>
+      <button id="tab-home" class="active" onclick="showTab('home')">Start</button>
+      <button id="tab-learn" onclick="showTab('learn')">Lernen</button>
+      <button id="tab-exam" onclick="showTab('exam')">Prüfung</button>
+      <button id="tab-stats" onclick="showTab('stats')">Statistik</button>
+    </nav>
+  </div>
+</header>
+<main class="container">
+  <section id="view-home" class="grid">
+    <div class="card">
+      <h1>Willkommen 👋</h1>
+      <p>Trainiere die Hygieneprüfung wie in der Führerschein-App: thematisch lernen, Prüfung simulieren. Offline nutzbar (PWA), keine Bilder nötig.</p>
+      <div class="row">
+        <button class="btn primary" onclick="showTab('learn')">Jetzt lernen</button>
+        <button class="btn" onclick="showTab('exam')">Prüfung starten</button>
+        <button class="btn" onclick="exportAll()">Export</button>
+        <label class="btn"><input type="file" accept="application/json" onchange="importAll(event)" style="display:none">Import</label>
+      </div>
+      <p class="muted" style="margin-top:8px">Prüfung: <b>20 Fragen</b>, Bestehen ab <b>80%</b>, zufällig aus <b>allen Themen</b>.</p>
+    </div>
+    <div class="card">
+      <h2>Einstellungen</h2>
+      <div class="row">
+        <div><label class="muted">Prüfungsfragen</label><input id="cfgExamCount" type="number" min="10" max="50" value="20"></div>
+        <div><label class="muted">Bestehen ab (%)</label><input id="cfgPassPct" type="number" min="50" max="100" value="80"></div>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <button class="btn" onclick="saveConfig()">Speichern</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="view-learn" class="hidden grid">
+    <div class="card">
+      <h2>Lernen nach Thema</h2>
+      <div class="row">
+        <select id="topicSelect"></select>
+        <button class="btn" onclick="prevLearn()">Zurück</button>
+        <button class="btn primary" onclick="nextLearn()">Weiter</button>
+      </div>
+      <div id="learnArea" style="margin-top:12px"></div>
+    </div>
+    <div class="card">
+      <h2>Filter</h2>
+      <div class="row">
+        <select id="qtypeSelect"></select>
+        <select id="difficultySelect"></select>
+      </div>
+      <p class="muted">Sofort auf „Prüfen“ klicken für Feedback. Erklärungsfeld ist optional und kann später ergänzt werden.</p>
+    </div>
+  </section>
+
+  <section id="view-exam" class="hidden">
+    <div class="card">
+      <h2>Prüfungssimulation</h2>
+      <p class="muted">Zufällige Auswahl aus allen Themen. Ergebnisse mit Fehlerliste.</p>
+      <div class="row">
+        <button class="btn primary" onclick="startExam()">Starten (20 Fragen)</button>
+        <button class="btn" onclick="resumeExam()">Fortsetzen</button>
+        <button class="btn" onclick="cancelExam()">Abbrechen</button>
+      </div>
+      <div id="examArea" style="margin-top:12px"></div>
+    </div>
+  </section>
+
+  <section id="view-stats" class="hidden grid">
+    <div class="card">
+      <h2>Statistik</h2>
+      <div class="item"><div>Fragen gesamt</div><div id="statTotal">–</div></div>
+      <div class="item"><div>Gesehen</div><div id="statSeen">–</div></div>
+      <div class="item"><div>Ø Erfolgsquote</div><div id="statRate">–</div></div>
+      <div class="item"><div>Letzte Prüfung</div><div id="statLastExam">–</div></div>
+    </div>
+    <div class="card">
+      <h2>Fehlerliste (wiederholen)</h2>
+      <div id="reviewList"></div>
+    </div>
+  </section>
+
+  <div class="footer">© Dein Fachkurs • Offline-fähig • Lokal gespeichert</div>
+</main>
+<script src="app.js"></script>
+<script> if('serviceWorker' in navigator){ window.addEventListener('load', ()=> navigator.serviceWorker.register('sw.js')); } </script>
+</body>
+</html>
